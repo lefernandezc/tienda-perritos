@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const {
-  DB_HOST = "10.0.157.160", // acá colocar la IP Privada EC2 DB autor: Leandro Fernández
+  DB_HOST = tienda-db, // acá resuelve internamente en eks
   DB_USER = "root",
   DB_PASSWORD = "admin123",
   DB_NAME = "tienda_perritos",
@@ -46,9 +46,7 @@ function handleError(res, error, message = "Error interno del servidor") {
 // Obtener todos los productos
 app.get("/api/productos", async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      "SELECT id, nombre, descripcion, precio, stock FROM productos ORDER BY id DESC",
-    );
+    const [rows] = await pool.query("SELECT id, nombre, descripcion, precio, stock FROM productos ORDER BY id DESC");
     res.json(rows);
   } catch (err) {
     handleError(res, err, "No se pudieron obtener los productos.");
@@ -59,10 +57,7 @@ app.get("/api/productos", async (req, res) => {
 app.get("/api/productos/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await pool.query(
-      "SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?",
-      [id],
-    );
+    const [rows] = await pool.query("SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?", [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: "Producto no encontrado." });
     }
@@ -77,21 +72,16 @@ app.post("/api/productos", async (req, res) => {
   const { nombre, descripcion, precio, stock } = req.body;
 
   if (!nombre || precio == null || stock == null) {
-    return res
-      .status(400)
-      .json({ message: "Nombre, precio y stock son obligatorios." });
+    return res.status(400).json({ message: "Nombre, precio y stock son obligatorios." });
   }
 
   try {
     const [result] = await pool.query(
       "INSERT INTO productos (nombre, descripcion, precio, stock) VALUES (?, ?, ?, ?)",
-      [nombre, descripcion || null, precio, stock],
+      [nombre, descripcion || null, precio, stock]
     );
     const nuevoId = result.insertId;
-    const [rows] = await pool.query(
-      "SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?",
-      [nuevoId],
-    );
+    const [rows] = await pool.query("SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?", [nuevoId]);
     res.status(201).json(rows[0]);
   } catch (err) {
     handleError(res, err, "No se pudo crear el Producto.");
@@ -104,25 +94,20 @@ app.put("/api/productos/:id", async (req, res) => {
   const { nombre, descripcion, precio, stock } = req.body;
 
   if (!nombre || precio == null || stock == null) {
-    return res
-      .status(400)
-      .json({ message: "Nombre, Precio y Stock son obligatorios." });
+    return res.status(400).json({ message: "Nombre, Precio y Stock son obligatorios." });
   }
 
   try {
     const [result] = await pool.query(
       "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ? WHERE id = ?",
-      [nombre, descripcion || null, precio, stock, id],
+      [nombre, descripcion || null, precio, stock, id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Producto no encontrado." });
     }
 
-    const [rows] = await pool.query(
-      "SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?",
-      [id],
-    );
+    const [rows] = await pool.query("SELECT id, nombre, descripcion, precio, stock FROM productos WHERE id = ?", [id]);
     res.json(rows[0]);
   } catch (err) {
     handleError(res, err, "No se pudo actualizar el Producto.");
@@ -133,9 +118,7 @@ app.put("/api/productos/:id", async (req, res) => {
 app.delete("/api/productos/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await pool.query("DELETE FROM productos WHERE id = ?", [
-      id,
-    ]);
+    const [result] = await pool.query("DELETE FROM productos WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Producto no encontrado." });
     }
@@ -145,11 +128,11 @@ app.delete("/api/productos/:id", async (req, res) => {
   }
 });
 
-// Endpoint de salud
+// Endpoint de salud para Kubernetes
 app.get("/api/health", (req, res) => {
-  res.json({
+  res.status(200).json({
     status: "ok",
-    message: "Backend de tienda de perritos en ejecución.",
+    message: "Backend de tienda de perritos en ejecución."
   });
 });
 
