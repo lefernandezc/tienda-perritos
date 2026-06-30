@@ -67,7 +67,7 @@ app.get("/api/productos/:id", async (req, res) => {
   }
 });
 
-// Crear un nuevo producto
+// Crear un nuevo producto Leandro Fernandez
 app.post("/api/productos", async (req, res) => {
   const { nombre, descripcion, precio, stock } = req.body;
 
